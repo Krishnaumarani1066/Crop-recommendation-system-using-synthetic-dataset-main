@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Real vs Synthetic — Accuracy & F1 (on Real Test Set)</h2>
+  <p class="small">Click Evaluate to compute metrics on the held-out real test split saved during training.</p>
+  <div style="display:flex; gap:10px; margin-bottom:12px;">
+    <button id="btnEval" class="btn btn-primary">Evaluate</button>
+    <span id="loadingMsg" style="display:none;color:#a8ff60;">Fetching metrics...</span>
+  </div>
+
+  <canvas id="accChart" height="100"></canvas>
+  <div style="height:10px"></div>
+  <canvas id="f1Chart" height="100"></canvas>
+</div>
+
+<script>
+const accCtx = document.getElementById('accChart').getContext('2d');
+const f1Ctx = document.getElementById('f1Chart').getContext('2d');
+let accChart, f1Chart;
+
+function renderCharts(payload){
+  const realAcc = payload.results.real.accuracy;
+  const synthAcc = payload.results.synth.accuracy;
+  const realF1 = payload.results.real.f1;
+  const synthF1 = payload.results.synth.f1;
+
+  const maxAcc = Math.max(realAcc, synthAcc) * 1.1;
+  const maxF1 = Math.max(realF1, synthF1) * 1.1;
+
+  if(accChart){ accChart.destroy(); }
+  if(f1Chart){ f1Chart.destroy(); }
+
+  accChart = new Chart(accCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Real Model', 'Synthetic Model'],
+      datasets: [{
+        label: 'Accuracy',
+        data: [realAcc, synthAcc],
+        backgroundColor: ['rgba(168,255,96,0.8)', 'rgba(91,179,24,0.8)'],
+        borderColor: ['rgba(168,255,96,1)', 'rgba(91,179,24,1)'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, max: maxAcc, ticks: { stepSize: 0.1 } }
+      },
+      animation: { duration: 700 }
+    }
+  });
+
+  f1Chart = new Chart(f1Ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Real Model', 'Synthetic Model'],
+      datasets: [{
+        label: 'F1 Score (weighted)',
+        data: [realF1, synthF1],
+        backgroundColor: ['rgba(168,255,96,0.8)', 'rgba(91,179,24,0.8)'],
+        borderColor: ['rgba(168,255,96,1)', 'rgba(91,179,24,1)'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, max: maxF1, ticks: { stepSize: 0.1 } }
+      },
+      animation: { duration: 700 }
+    }
+  });
+}
+
+document.getElementById('btnEval').addEventListener('click', async () => {
+  const loadingMsg = document.getElementById('loadingMsg');
+  loadingMsg.style.display = 'inline';
+  try {
+    const r = await fetch('{{ url_for("metrics") }}');
+    const payload = await r.json();
+    if(!payload.results){
+      alert("No metrics returned. Try again later.");
+      return;
+    }
+    renderCharts(payload);
+  } catch(err){
+    console.error(err);
+    alert("Error fetching metrics. Check the server.");
+  } finally {
+    loadingMsg.style.display = 'none';
+  }
+});
+</script>
+{% endblock %}

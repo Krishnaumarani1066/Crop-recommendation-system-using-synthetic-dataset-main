@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>🌱 Crop Reco — Premium Look</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+    <style>
+      /* --- Body & Background --- */
+      body {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        /* Farmer photo + soft blur + fog overlay */
+        background: 
+          linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.15)), /* soft fog */
+          url("https://images.pexels.com/photos/41945/pexels-photo-41945.jpeg") no-repeat center center fixed;
+        background-size: cover;
+        color: #f0f0f0;
+      }
+
+      /* Apply blur filter to pseudo-element for soft background blur effect */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%;
+        height: 100%;
+        backdrop-filter: blur(6px);
+        z-index: -1;
+      }
+
+      /* --- Main Container --- */
+      .container {
+        max-width: 1100px;
+        margin: 40px auto;
+        padding: 25px;
+        background: rgba(20, 20, 20, 0.85); /* Dark glass overlay */
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+      }
+
+      /* --- Navbar --- */
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(30, 30, 30, 0.9);
+        padding: 15px 25px;
+        border-radius: 12px;
+      }
+
+      .nav a {
+        margin: 0 12px;
+        text-decoration: none;
+        color: #a8ff60;
+        font-weight: 500;
+        transition: 0.3s;
+      }
+
+      .nav a:hover {
+        color: #ffffff;
+        text-shadow: 0 0 6px rgba(168,255,96,0.7);
+      }
+
+      .brand {
+        font-size: 22px;
+        font-weight: 700;
+        color: #f0f0f0;
+      }
+
+      /* --- Alerts --- */
+      .alert {
+        background: rgba(255, 200, 0, 0.9);
+        color: #1b1b1b;
+        padding: 12px;
+        border-radius: 10px;
+        margin-top: 10px;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        text-align: center;
+        margin-top: 30px;
+        color: #f0f0f0;
+        padding: 15px;
+        font-size: 14px;
+        background: rgba(0,0,0,0.6);
+        border-radius: 10px;
+      }
+
+      /* --- Headings & Sections --- */
+      h1, h2, h3, h4 {
+        color: #f0f0f0;
+      }
+
+      /* --- Cards / Sections --- */
+      .card {
+        background: rgba(40, 40, 40, 0.85);
+        padding: 20px;
+        border-radius: 12px;
+        margin-top: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      }
+
+      /* --- Buttons --- */
+      button, input[type="submit"] {
+        background: linear-gradient(90deg, #a8ff60, #5bb318);
+        color: #1b1b1b;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      button:hover, input[type="submit"]:hover {
+        background: linear-gradient(90deg, #5bb318, #a8ff60);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(168,255,96,0.7);
+      }
+
+      /* --- Form Inputs --- */
+      input, select {
+        width: 100%;
+        padding: 10px 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: 1px solid #555;
+        background: #222;
+        color: #f0f0f0;
+      }
+
+      input:focus, select:focus {
+        outline: none;
+        border: 1px solid #a8ff60;
+        box-shadow: 0 0 8px rgba(168,255,96,0.5);
+      }
+
+      .chart-container {
+        background: rgba(30,30,30,0.85);
+        padding: 20px;
+        border-radius: 12px;
+        margin-top: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="nav">
+        <div class="brand">🌱 Crop Reco</div>
+        <div>
+          <a href="{{ url_for('index') }}">Predict</a>
+          <a href="{{ url_for('compare') }}">Compare</a>
+          <a href="https://kaggle.com" target="_blank">Kaggle</a>
+        </div>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}
+      <div class="card">
+        <h2>Crop Recommendation using Synthetic Dataset</h2>
+        <p>Enter realistic values only. Inputs are constrained to dataset-like ranges.</p>
+        <form method="POST">
+          <label>Input 1:</label>
+          <input type="number" name="input1" placeholder="Enter value" required>
+          <label>Input 2:</label>
+          <input type="number" name="input2" placeholder="Enter value" required>
+          <input type="submit" value="Predict">
+        </form>
+      </div>
+
+      <div class="card chart-container">
+        <h3>Models</h3>
+        <p>Real-trained & Synthetic-trained</p>
+        <canvas id="compareChart"></canvas>
+      </div>
+      {% endblock %}
+
+      <div class="footer">🚀 Built with ❤️ by Krishna for learning. Includes Ranges & Server Validation.</div>
+
+    </div>
+
+    <script>
+      const ctx = document.getElementById('compareChart').getContext('2d');
+      const compareChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Accuracy', 'F1 Score'],
+          datasets: [
+            { label: 'Real-trained', data: [0.85, 0.82], backgroundColor: 'rgba(168,255,96,0.8)' },
+            { label: 'Synthetic-trained', data: [0.78, 0.75], backgroundColor: 'rgba(91,179,24,0.8)' }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: '#f0f0f0' } } },
+          scales: { x: { ticks: { color: '#f0f0f0' } }, y: { ticks: { color: '#f0f0f0' } } }
+        }
+      });
+    </script>
+  </body>
+</html>
