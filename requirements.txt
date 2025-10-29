@@ -1,6 +1,7 @@
-flask
+Flask
 gunicorn
 pandas
+numpy
 scikit-learn
-matplotlib
 joblib
+matplotlib
